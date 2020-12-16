@@ -1,0 +1,2497 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class CreateGameBoard : MonoBehaviour
+{
+    public GameObject GoldPrefab;
+    public GameObject[,] AllGoldPrefabs;
+    public GameObject cubePrefab1;
+    public GameObject cubePrefab2;
+    public GameObject[,] CubeMatris;
+    public int[,] GizliAltinMatris;
+    public GameObject playerAprefab;
+    public GameObject playerBprefab;
+    public GameObject playerCprefab;
+    public GameObject playerDprefab;
+    public GameObject OyuncuA;
+    public GameObject OyuncuB;
+    public GameObject OyuncuC;
+    public GameObject OyuncuD;
+    public bool TurnOyuncuA;
+    public bool TurnOyuncuB;
+    public bool TurnOyuncuC;
+    public bool TurnOyuncuD;
+    public int GizliAltinIhtimal;
+
+    //GameManagerden gelenler
+    public Camera maincamera;
+    public int[,] GoldMatris;
+    public GameObject[,] PlayerMatris;
+    public int z, x;
+    public int AltinSayisi = 0;
+    public int GizliAltinSayisi=0;
+    public float ihtimal = 0;
+    public int KasadakiToplamAltin=0;
+
+
+    public int Counter;
+    public int KareSayisiZ=20;
+    public int KareSayisiX = 20;
+    public int turSayisi;
+    public bool OyuncuAElendiMi;
+    public bool OyuncuBElendiMi;
+    public bool OyuncuCElendiMi;
+    public bool OyuncuDElendiMi;
+    int toplamElenen=0;
+    public GameObject gameManager;
+
+
+    private void Awake()
+    {
+        OyunuHazirla();
+    }
+    void Start()
+    {
+        //Debug.Log("Hedef Belirleniyor");
+        //OyuncuA.GetComponent<PlayerA>().HedefBelirle(GoldMatris, 80, KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+
+        //Debug.Log("A harekete geçiyor");
+        //OyuncuA.GetComponent<PlayerA>().HamleYap();
+
+
+        //Debug.Log("AltinSayisi:" +AltinSayisi);
+
+        //while (AltinSayisi > 0)
+        //{
+        //    if (OyuncuA.GetComponent<PlayerA>().HedefKonumX == -10 && OyuncuA.GetComponent<PlayerA>().HedefKonumZ == -10)//Hedefi yoksa
+        //    {
+        //        Debug.Log("Hedef Belirleniyor");
+        //        OyuncuA.GetComponent<PlayerA>().HedefBelirle(GoldMatris, 80, KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+        //    }
+        //    OyuncuA.GetComponent<PlayerA>().HamleYap();
+
+        //    Debug.Log("Hamle Yapildi");
+
+
+        //}
+
+        //Debug.Log("Altin bitti.Altin Sayisi:" + AltinSayisi);
+        StartCoroutine(StartedGame());
+        //OyuncuB.GetComponent<PlayerB>().HedefBelirle(GoldMatris, 80, KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+        
+
+    }
+    IEnumerator StartedGame()
+    {
+        while (AltinSayisi-GizliAltinSayisi > 0 || GizliAltinSayisi>0)
+        {
+            //Debug.Log("" + GizliAltinSayisi);
+            //Debug.Log("" + AltinSayisi);
+            //Bazen son altınlarda sıkıntı çıkıyor 1 veya 2 tane altın kalıyor bazen ama altın sayısı 0 oluyor.Aynı altını aldıkları için sanırım.
+            //yield return new WaitForSeconds(0.02f);
+            //Debug.Log(turSayisi/4);
+            //yield return new WaitForSeconds(0.001f);
+            yield return new WaitForSeconds(0.05f);
+            if (TurnOyuncuA)
+            {
+                if (!OyuncuAElendiMi)
+                {
+                   PlayerAPlaying();
+                }
+                
+                TurnOyuncuA = false;
+                TurnOyuncuB = true;
+
+            }
+            else if (TurnOyuncuB)
+            {
+                if (!OyuncuBElendiMi)
+                {
+                    PlayerBPlaying();
+                }
+                TurnOyuncuB = false;
+                TurnOyuncuC = true;
+            }
+            else if (TurnOyuncuC)
+            {
+                if (!OyuncuCElendiMi)
+                {
+                    PlayerCPlaying();
+                }
+                TurnOyuncuC = false;
+                TurnOyuncuD = true;
+            }
+            else if (TurnOyuncuD)
+            {
+                if (!OyuncuDElendiMi)
+                {
+                    PlayerDPlaying();
+                }
+                TurnOyuncuD = false;
+                TurnOyuncuA = true;
+            }
+            
+
+            turSayisi++;
+            TurSonuKontrol();
+            if (toplamElenen==3)
+            {
+                if (!OyuncuAElendiMi)
+                {
+                    Debug.Log("kazanan A");
+                }
+                if (!OyuncuBElendiMi)
+                {
+                    Debug.Log("kazanan B");
+                }
+                if (!OyuncuCElendiMi)
+                {
+                    Debug.Log("kazanan C");
+                }
+                if (!OyuncuDElendiMi)
+                {
+                    Debug.Log("kazanan D");
+                }
+                
+            }
+            if (toplamElenen == 4)
+            {
+                break;
+            }
+
+
+
+        }
+        KasadakiAltiniHesapla();
+        //Debug.Log("Kalan Altın Miktarı" + KasadakiToplamAltin);
+        //Debug.Log("Altin bitti.Altin Sayisi:" + AltinSayisi);
+        Debug.Log("Oyuncu A Bilgiler " + OyuncuA.GetComponent<PlayerA>().ToplamAdimSayisi + " " + OyuncuA.GetComponent<PlayerA>().ToplananAltinSayisi + " " + OyuncuA.GetComponent<PlayerA>().ToplamHarcananAltinsayisi);
+        Debug.Log("Oyuncu B Bilgiler " + OyuncuB.GetComponent<PlayerB>().ToplamAdimSayisi + " " + OyuncuB.GetComponent<PlayerB>().ToplananAltinSayisi + " " + OyuncuB.GetComponent<PlayerB>().ToplamHarcananAltinsayisi);
+        Debug.Log("Oyuncu C Bilgiler " + OyuncuC.GetComponent<PlayerC>().ToplamAdimSayisi + " " + OyuncuC.GetComponent<PlayerC>().ToplananAltinSayisi + " " + OyuncuC.GetComponent<PlayerC>().ToplamHarcananAltinsayisi);
+        Debug.Log("Oyuncu D Bilgiler " + OyuncuD.GetComponent<PlayerD>().ToplamAdimSayisi + " " + OyuncuD.GetComponent<PlayerD>().ToplananAltinSayisi + " " + OyuncuD.GetComponent<PlayerD>().ToplamHarcananAltinsayisi);
+        gameManager.GetComponent<GameManager>().SetResultPanel();
+
+        // StartCoroutine(WaitLoadScene());
+    }
+
+    public void KasadakiAltiniHesapla()
+    {
+        for (int i = 0; i < KareSayisiZ; i++)
+        {
+            for (int j = 0; j < KareSayisiX; j++)
+            {
+                if (GizliAltinMatris[i, j] != 0)
+                {
+                    KasadakiToplamAltin += GizliAltinMatris[i, j];
+                }
+            }
+        }
+        for (int i = 0; i < KareSayisiZ; i++)
+        {
+            for (int j = 0; j < KareSayisiX; j++)
+            {
+                if (GoldMatris[i, j] != 0)
+                {
+                    KasadakiToplamAltin += GoldMatris[i, j];
+                }
+            }
+        }
+
+
+    }
+    public void TurSonuKontrol()
+    {
+        toplamElenen = 0;
+        if (OyuncuAElendiMi)
+        {
+            toplamElenen++;
+        }
+        if (OyuncuBElendiMi)
+        {
+            toplamElenen++;
+        }
+        if (OyuncuCElendiMi)
+        {
+            toplamElenen++;
+        }
+        if (OyuncuDElendiMi)
+        {
+            toplamElenen++;
+        }
+    }
+    IEnumerator WaitLoadScene()
+    {
+        yield return new WaitForSeconds(3f);
+        SceneManager.LoadScene("GameLevel");
+    }
+    void PlayerDPlaying()
+    {
+        if (OyuncuD.GetComponent<PlayerD>().HedefKonumX == -10 && OyuncuD.GetComponent<PlayerD>().HedefKonumZ == -10)//Hedefi yoksa
+        {
+             //Debug.Log("B nin hedefi yok Hedef Belirleniyor");
+            OyuncuD.GetComponent<PlayerD>().HedefBelirle( KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+        }
+        else if (GoldMatris[OyuncuD.GetComponent<PlayerD>().HedefKonumZ, OyuncuD.GetComponent<PlayerD>().HedefKonumX] == 0)//Hedeflediğini başkası almışsa 
+        {
+            //   Debug.Log("B nin hedefini başkası almış yeniden Hedef Belirleniyor");
+            OyuncuD.GetComponent<PlayerD>().HedefBelirle( KareSayisiZ, KareSayisiX);
+        }
+        if (OyuncuD.GetComponent<PlayerD>().HedefKonumX != -10 && OyuncuD.GetComponent<PlayerD>().HedefKonumZ != -10 && !OyuncuDElendiMi && AltinSayisi - GizliAltinSayisi > 0)
+        {
+            OyuncuD.GetComponent<PlayerD>().HamleYap();
+        }
+
+        
+
+        //Debug.Log("Hamle Yapildi");
+    }
+    void PlayerCPlaying()
+    {
+       //Her hedef belirlediğinde gizli altınları açığa çıkartıyor.
+        if (OyuncuC.GetComponent<PlayerC>().HedefKonumX == -10 && OyuncuC.GetComponent<PlayerC>().HedefKonumZ == -10)//Hedefi yoksa
+        {
+            if (GizliAltinSayisi > 0)
+            {
+                //Debug.Log("TespitEdiliyor");
+                OyuncuC.GetComponent<PlayerC>().GizliAltinlariTespitEt(GizliAltinMatris, 80, KareSayisiZ, KareSayisiX);
+            }
+            //Debug.Log("B nin hedefi yok Hedef Belirleniyor");
+            OyuncuC.GetComponent<PlayerC>().HedefBelirle( KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+        }
+        else if (GoldMatris[OyuncuC.GetComponent<PlayerC>().HedefKonumZ, OyuncuC.GetComponent<PlayerC>().HedefKonumX] == 0)//Hedeflediğini başkası almışsa 
+        {
+            if (GizliAltinSayisi > 0)
+            {
+                OyuncuC.GetComponent<PlayerC>().GizliAltinlariTespitEt(GizliAltinMatris, 80, KareSayisiZ, KareSayisiX);
+            }
+            //Debug.Log("B nin hedefini başkası almış yeniden Hedef Belirleniyor");
+            OyuncuC.GetComponent<PlayerC>().HedefBelirle( KareSayisiZ, KareSayisiX);
+        }
+        if (OyuncuC.GetComponent<PlayerC>().HedefKonumX != -10 && OyuncuC.GetComponent<PlayerC>().HedefKonumZ != -10 && !OyuncuCElendiMi && AltinSayisi - GizliAltinSayisi > 0)
+        {
+            OyuncuC.GetComponent<PlayerC>().HamleYap();
+        }
+        
+
+        //Debug.Log("Hamle Yapildi");
+    }
+    void PlayerBPlaying()
+    {
+        if (OyuncuB.GetComponent<PlayerB>().HedefKonumX == -10 && OyuncuB.GetComponent<PlayerB>().HedefKonumZ == -10)//Hedefi yoksa
+        {
+            // Debug.Log("B nin hedefi yok Hedef Belirleniyor");
+            OyuncuB.GetComponent<PlayerB>().HedefBelirle(KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+        }
+        else if (GoldMatris[OyuncuB.GetComponent<PlayerB>().HedefKonumZ, OyuncuB.GetComponent<PlayerB>().HedefKonumX] == 0)//Hedeflediğini başkası almışsa 
+        {
+            //   Debug.Log("B nin hedefini başkası almış yeniden Hedef Belirleniyor");
+            OyuncuB.GetComponent<PlayerB>().HedefBelirle(KareSayisiZ, KareSayisiX);
+        }
+        if (OyuncuB.GetComponent<PlayerB>().HedefKonumX != -10 && OyuncuB.GetComponent<PlayerB>().HedefKonumZ != -10 && !OyuncuBElendiMi && AltinSayisi - GizliAltinSayisi > 0)
+        {
+            OyuncuB.GetComponent<PlayerB>().HamleYap();
+        }
+        
+
+        //Debug.Log("Hamle Yapildi");
+    }
+    void PlayerAPlaying()
+    {
+        //Debug.Log("1 " + OyuncuA.GetComponent<PlayerA>().HedefKonumZ + "  " + OyuncuA.GetComponent<PlayerA>().HedefKonumX);
+        if (OyuncuA.GetComponent<PlayerA>().HedefKonumX == -10 && OyuncuA.GetComponent<PlayerA>().HedefKonumZ == -10)//Hedefi yoksa
+        {
+
+            //Debug.Log("A nın hedefi yok Hedef Belirleniyor");
+            OyuncuA.GetComponent<PlayerA>().HedefBelirle( KareSayisiZ, KareSayisiX); //A HEDEF BELİRLİYOR 80 AltinSayisi
+           // Debug.Log("2 " + OyuncuA.GetComponent<PlayerA>().HedefKonumZ + "  " + OyuncuA.GetComponent<PlayerA>().HedefKonumX);
+        }  
+        else if (GoldMatris[OyuncuA.GetComponent<PlayerA>().HedefKonumZ, OyuncuA.GetComponent<PlayerA>().HedefKonumX] == 0) //Hedeflenen konumdakini başkası aldıysa
+        {
+            //Debug.Log("3 " + OyuncuA.GetComponent<PlayerA>().HedefKonumZ + "  " + OyuncuA.GetComponent<PlayerA>().HedefKonumX);
+            //Debug.Log("A nın altınını başkası almış yeniden Hedef Belirleniyor");
+            
+            OyuncuA.GetComponent<PlayerA>().HedefBelirle( KareSayisiZ, KareSayisiX);
+        }
+        if (OyuncuA.GetComponent<PlayerA>().HedefKonumX != -10 && OyuncuA.GetComponent<PlayerA>().HedefKonumZ != -10 && !OyuncuAElendiMi && AltinSayisi -GizliAltinSayisi>0)
+        {
+            OyuncuA.GetComponent<PlayerA>().HamleYap();
+        }
+        
+
+        //Debug.Log("Hamle Yapildi");
+    }
+
+    void OyunuHazirla()
+    {
+        turSayisi = 0;
+        TurnOyuncuA = true;
+        TurnOyuncuB = false;
+        TurnOyuncuC = false;
+        TurnOyuncuD = false;
+        KareSayisiZ = PlayerPrefs.GetInt("_M");
+        KareSayisiX = PlayerPrefs.GetInt("_N");
+        ihtimal = PlayerPrefs.GetInt("ihtimal");
+        GizliAltinIhtimal = PlayerPrefs.GetInt("_GAO");
+        //Debug.Log("İhtimal:" + ihtimal);
+        AltinSayisi = (int) (((KareSayisiX * KareSayisiZ) * ihtimal) / 100);
+        GizliAltinSayisi = (int) ((AltinSayisi * GizliAltinIhtimal) / 100);
+        GizliAltinMatris = new int[KareSayisiZ, KareSayisiX];
+        //Debug.Log("AltinSayisi ihtimalden sonra:" + AltinSayisi);
+        CubeMatris = new GameObject[KareSayisiZ, KareSayisiX];
+        AllGoldPrefabs = new GameObject[KareSayisiZ, KareSayisiX];
+        Counter = 0;
+        createBoard();
+        CreatePlayers();
+        GoldMatris = new int[KareSayisiZ, KareSayisiX];
+        maincamera.transform.position = new Vector3(KareSayisiX / 2, ((KareSayisiX + KareSayisiZ) / 2) * 1.5f, KareSayisiZ / 2);
+        MatrisYazdir();//Matrise Altın Sayısı kadar 5-20 arasında bir değer atıldı.
+        AltinSayisi = (int)(((KareSayisiX * KareSayisiZ) * ihtimal) / 100);
+        GizliAltinSayisi = (int)((AltinSayisi * GizliAltinIhtimal) / 100);
+        //Debug.Log(AltinSayisi);
+        //Debug.Log(GizliAltinSayisi);
+        //Debug.Log(GizliAltinIhtimal);
+        //Debug.Log("Düzeltilmiş Altin Sayisi:"+AltinSayisi);
+        PlayerMatris = new GameObject[KareSayisiZ, KareSayisiX];
+        
+        KonumlariAyarla();
+        OyuncuAElendiMi = false;
+        OyuncuBElendiMi = false;
+        OyuncuCElendiMi = false;
+        OyuncuDElendiMi = false;
+}
+    void createBoard()
+    {
+        for (int i = 0; i < KareSayisiZ; i++)
+        {
+
+            for (int j = 0; j < KareSayisiX; j++)
+            {
+                
+                if (Counter % 2 == 0)
+                {
+                    GameObject cubeObj = Instantiate(cubePrefab1, new Vector3(j, 0, i), Quaternion.identity);
+                    CubeMatris[i, j] = cubeObj;
+                }
+                else
+                {
+                     GameObject cubeObj= Instantiate(cubePrefab2, new Vector3(j, 0, i), Quaternion.identity);
+                    CubeMatris[i, j] = cubeObj;
+                }
+                
+
+
+                Counter++;
+
+            }
+            if (KareSayisiX % 2 == 0)
+            {
+                Counter++;
+            }
+            
+
+
+        }
+
+
+
+
+    }
+    void CreatePlayers()
+    {
+
+         OyuncuA =Instantiate(playerAprefab, new Vector3(0, 1, 0), Quaternion.identity)as GameObject;
+
+         OyuncuB =Instantiate(playerBprefab, new Vector3(KareSayisiX-1, 1, 0), Quaternion.identity)as GameObject;
+      
+         OyuncuC = Instantiate(playerCprefab, new Vector3(KareSayisiX - 1, 1, KareSayisiZ - 1), Quaternion.identity)as GameObject;
+         OyuncuD = Instantiate(playerDprefab, new Vector3(0, 1, KareSayisiZ - 1), Quaternion.identity)as GameObject;
+         
+
+    }
+
+    void MatrisYazdir()
+    {
+
+        for (int i = 0; i < KareSayisiZ; i++)
+        {
+            for (int j = 0; j < KareSayisiX; j++)
+            {
+                GoldMatris[i, j] = 0;
+            }
+        }
+        AltinSayisi = (int)(((KareSayisiX * KareSayisiZ) * ihtimal) / 100);
+        
+
+        for (int i = 0; i < KareSayisiZ; i++)
+        {
+            for (int j = 0; j < KareSayisiX; j++)
+            {
+                GizliAltinMatris[i, j] = 0;
+            }
+        }
+        GizliAltinSayisi = (int)((AltinSayisi * GizliAltinIhtimal) / 100);
+        //Debug.Log(GizliAltinSayisi);
+
+        while (AltinSayisi > GizliAltinSayisi )
+        {
+           
+            if (GoldMatris[z = Random.Range(0, KareSayisiZ), x = Random.Range(0, KareSayisiX)] == 0)
+            {
+                GameObject Gold_Obj=  Instantiate(GoldPrefab, new Vector3(x, 1f, z),Quaternion.Euler(40f,0f,0f)) as GameObject;
+                
+                AllGoldPrefabs[z, x] = Gold_Obj;
+
+                GoldMatris[z, x] = Random.Range(1, 5) * 5;  //5-10-15-20 üretiyor
+                
+                AltinSayisi--;
+                //Debug.Log("Altinin konumu Z:"+z+" X:"+x);
+            }
+
+        }
+        while (GizliAltinSayisi > 0)
+        {
+            if(GoldMatris[z = Random.Range(0, KareSayisiZ), x = Random.Range(0, KareSayisiX)] == 0 && GizliAltinMatris[z, x] == 0)
+            {
+                //Debug.Log("Gizli altinin konumu Z:" + z + " X:" + x);
+                GizliAltinMatris[z, x] = Random.Range(1, 5) * 5;
+                GizliAltinSayisi--;
+            }
+
+        }
+
+        //for (int i = 0; i < KareSayisiZ; i++)
+        //{
+        //    for (int j = 0; j < KareSayisiX; j++)
+        //    {
+        //        if (GizliAltinMatris[i, j] != 0)
+        //        {
+        //            Debug.Log("[" + i + "," + j + "]");
+        //        }
+        //    }
+        //}
+
+    }
+
+    void KonumlariAyarla()
+    {
+        PlayerMatris[0, 0] = OyuncuA;
+        OyuncuA.GetComponent<PlayerA>().KonumuAyarla(0, 0);
+
+
+        PlayerMatris[0, KareSayisiX - 1] = OyuncuB;
+        OyuncuB.GetComponent<PlayerB>().KonumuAyarla(0, KareSayisiX - 1);
+
+        PlayerMatris[KareSayisiZ - 1, KareSayisiX - 1] = OyuncuC;
+        OyuncuC.GetComponent<PlayerC>().KonumuAyarla(KareSayisiZ - 1, KareSayisiX - 1);
+
+        PlayerMatris[KareSayisiZ - 1, 0] = OyuncuD;
+        OyuncuD.GetComponent<PlayerD>().KonumuAyarla(KareSayisiZ - 1, 0);
+
+    }
+
+
+
+}
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GameManager : MonoBehaviour
+{
+    public GameObject OyuncuA;
+    public GameObject OyuncuB;
+    public GameObject OyuncuC;
+    public GameObject OyuncuD;
+    public Text GoldA;
+    public Text GoldB;
+    public Text GoldC;
+    public Text GoldD;
+    public GameObject sonucPanel;
+    public Text tasA;
+    public Text hamA;
+    public Text tamA;
+    public Text tasB;
+    public Text hamB;
+    public Text tamB;
+    public Text tasC;
+    public Text hamC;
+    public Text tamC;
+    public Text tasD;
+    public Text hamD;
+    public Text tamD;
+    public Text KasaAltinMiktari;
+    public GameObject createGameBoard;
+    private void Start()
+    {
+        sonucPanel.SetActive(false);
+        OyuncuA = GameObject.Find("PlayerA(Clone)");
+        OyuncuB = GameObject.Find("PlayerB(Clone)");
+        OyuncuC = GameObject.Find("PlayerC(Clone)");
+        OyuncuD = GameObject.Find("PlayerD(Clone)");
+        GoldA.text = OyuncuA.GetComponent<PlayerA>().Gold.ToString();
+        GoldB.text = OyuncuB.GetComponent<PlayerB>().Gold.ToString();
+        GoldC.text = OyuncuC.GetComponent<PlayerC>().Gold.ToString();
+        GoldD.text = OyuncuD.GetComponent<PlayerD>().Gold.ToString();
+    }
+    private void FixedUpdate()
+    {
+        GoldA.text = OyuncuA.GetComponent<PlayerA>().Gold.ToString();
+        GoldB.text = OyuncuB.GetComponent<PlayerB>().Gold.ToString();
+        GoldC.text = OyuncuC.GetComponent<PlayerC>().Gold.ToString();
+        GoldD.text = OyuncuD.GetComponent<PlayerD>().Gold.ToString();
+    }
+    public void SetResultPanel()
+    {
+        tasA.text = OyuncuA.GetComponent<PlayerA>().ToplamAdimSayisi.ToString();
+        hamA.text = OyuncuA.GetComponent<PlayerA>().ToplamHarcananAltinsayisi.ToString();
+        tamA.text = OyuncuA.GetComponent<PlayerA>().ToplananAltinSayisi.ToString();
+
+        tasB.text = OyuncuB.GetComponent<PlayerB>().ToplamAdimSayisi.ToString();
+        hamB.text = OyuncuB.GetComponent<PlayerB>().ToplamHarcananAltinsayisi.ToString();
+        tamB.text = OyuncuB.GetComponent<PlayerB>().ToplananAltinSayisi.ToString();
+
+        tasC.text = OyuncuC.GetComponent<PlayerC>().ToplamAdimSayisi.ToString();
+        hamC.text = OyuncuC.GetComponent<PlayerC>().ToplamHarcananAltinsayisi.ToString();
+        tamC.text = OyuncuC.GetComponent<PlayerC>().ToplananAltinSayisi.ToString();
+
+        tasD.text = OyuncuD.GetComponent<PlayerD>().ToplamAdimSayisi.ToString();
+        hamD.text = OyuncuD.GetComponent<PlayerD>().ToplamHarcananAltinsayisi.ToString();
+        tamD.text = OyuncuD.GetComponent<PlayerD>().ToplananAltinSayisi.ToString();
+
+        KasaAltinMiktari.text = createGameBoard.GetComponent<CreateGameBoard>().KasadakiToplamAltin.ToString();
+
+        sonucPanel.SetActive(true);
+    }
+
+}
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+
+public class MenuManager : MonoBehaviour
+{
+    public InputField HamleSayisi;
+    public InputField KareSayisiM;
+    public InputField KareSayisiN;
+    public InputField ihtimal;
+    public InputField Gizliihtimal;
+    public GameObject playerA;
+    public GameObject playerB;
+    public GameObject playerC;
+    public GameObject playerD;
+    public GameObject errorText;
+    public GameObject errorText2;
+    public int errorCount;
+
+    public void Start()
+    {
+        PlayerPrefs.SetInt("_GAO", 10);
+        PlayerPrefs.SetInt("_HS",3);
+        PlayerPrefs.SetInt("_M",20);//Z
+        PlayerPrefs.SetInt("_N",20);//X
+        PlayerPrefs.SetInt("ihtimal",20);// 20/100
+        PlayerPrefs.SetInt("A_Gold", 200);
+        PlayerPrefs.SetInt("B_Gold", 200);
+        PlayerPrefs.SetInt("C_Gold", 200);
+        PlayerPrefs.SetInt("D_Gold", 200);
+        PlayerPrefs.SetInt("A_HBM", 5);
+        PlayerPrefs.SetInt("B_HBM", 10);
+        PlayerPrefs.SetInt("C_HBM", 15);
+        PlayerPrefs.SetInt("D_HBM", 20);
+        PlayerPrefs.SetInt("A_HM",5);
+        PlayerPrefs.SetInt("B_HM", 5);
+        PlayerPrefs.SetInt("C_HM", 5);
+        PlayerPrefs.SetInt("D_HM", 5);
+        errorText.SetActive(false);
+        errorText2.SetActive(false);
+        errorCount=0;
+    }
+
+    public void Basla()
+    {
+        if (PlayerPrefs.GetInt("_M") <= 0 || PlayerPrefs.GetInt("_N")<=0)
+        {
+            errorText.SetActive(true);
+            errorCount++;
+        }
+        if(PlayerPrefs.GetInt("_HS")<=0)
+        {
+            errorText2.SetActive(true);
+            errorCount++;
+        }
+        if (errorCount == 0)
+        {
+            errorText.SetActive(false);
+            errorText2.SetActive(false);
+            SceneManager.LoadScene("GameLevel");
+        }
+        errorCount = 0;
+        
+    }
+   
+    public void GizliAltinOrani()
+    {
+
+        PlayerPrefs.SetInt("_GAO", Convert.ToInt32(Gizliihtimal.text));
+
+    }
+
+    public void HamleSayisiniAyarla()
+    {
+
+        PlayerPrefs.SetInt("_HS", Convert.ToInt32(HamleSayisi.text));
+
+    }
+
+    public void KareSayisiniAyarlaM()
+    {
+
+        PlayerPrefs.SetInt("_M", Convert.ToInt32(KareSayisiM.text));
+
+    }
+    public void KareSayisiniAyarlaN()
+    {
+
+        PlayerPrefs.SetInt("_N", Convert.ToInt32(KareSayisiN.text));
+
+    }
+    public void İhtimaliAyarla()
+    {
+
+        PlayerPrefs.SetInt("ihtimal", Convert.ToInt32(ihtimal.text));
+
+    }
+    public void AltiniAyarlaA()
+    {
+       
+        PlayerPrefs.SetInt("A_Gold", Convert.ToInt32(playerA.transform.GetChild(0).GetComponent<InputField>().text));
+        
+    }
+   public void AltiniAyarlaB()
+    {
+        PlayerPrefs.SetInt("B_Gold", Convert.ToInt32(playerB.transform.GetChild(0).GetComponent<InputField>().text));
+    }
+    public void AltiniAyarlaC()
+    {
+        PlayerPrefs.SetInt("C_Gold", Convert.ToInt32(playerC.transform.GetChild(0).GetComponent<InputField>().text));
+    }
+   public  void AltiniAyarlaD()
+    {
+        PlayerPrefs.SetInt("D_Gold", Convert.ToInt32(playerD.transform.GetChild(0).GetComponent<InputField>().text));
+    }
+
+    public void HedefMaliyetiBelirleA()
+    {
+
+        PlayerPrefs.SetInt("A_HBM", Convert.ToInt32(playerA.transform.GetChild(1).GetComponent<InputField>().text));
+
+    }
+    public void HedefMaliyetiBelirleB()
+    {
+
+        PlayerPrefs.SetInt("B_HBM", Convert.ToInt32(playerB.transform.GetChild(1).GetComponent<InputField>().text));
+
+    }
+    public void HedefMaliyetiBelirleC()
+    {
+
+        PlayerPrefs.SetInt("C_HBM", Convert.ToInt32(playerC.transform.GetChild(1).GetComponent<InputField>().text));
+
+    }
+    public void HedefMaliyetiBelirleD()
+    {
+
+        PlayerPrefs.SetInt("D_HBM", Convert.ToInt32(playerD.transform.GetChild(1).GetComponent<InputField>().text));
+
+    }
+
+    public void HamleMaliyetiA()
+    {
+
+        PlayerPrefs.SetInt("A_HM", Convert.ToInt32(playerA.transform.GetChild(2).GetComponent<InputField>().text));
+
+    }
+
+    public void HamleMaliyetiB()
+    {
+
+        PlayerPrefs.SetInt("B_HM", Convert.ToInt32(playerB.transform.GetChild(2).GetComponent<InputField>().text));
+
+    }
+    public void HamleMaliyetiC()
+    {
+
+        PlayerPrefs.SetInt("C_HM", Convert.ToInt32(playerC.transform.GetChild(2).GetComponent<InputField>().text));
+
+    }
+    public void HamleMaliyetiD()
+    {
+
+        PlayerPrefs.SetInt("D_HM", Convert.ToInt32(playerD.transform.GetChild(2).GetComponent<InputField>().text));
+
+    }
+
+
+}
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+public class PlayerA : MonoBehaviour, PlayerInterface // : Implements
+{
+
+    public int ToplamAdimSayisi=0;
+    public int ToplananAltinSayisi = 0;
+    public int ToplamHarcananAltinsayisi = 0;
+
+    public int Gold;
+
+    public int HedefBelirlemeMaliyeti;
+
+    public int HamleMaliyeti;
+
+    public int MatrisKonumZ;
+
+    public int MatrisKonumX;
+
+    public int HedefKonumZ;
+
+    public int HedefKonumX;
+
+    public int enYakinKonumZ=1000;
+
+    public int enYakinKonumX=1000;
+
+    public int HamleSayisi = 0;
+
+    public int GüncelHamle = 0;
+
+    public int TümAltinSayisi;
+
+    int i, j;
+    int toplam;
+
+    public GameObject Board;
+
+    string DosyaYolu;
+    FileStream fs; 
+    StreamWriter sw;
+
+    private void Awake()
+    {
+        
+
+        Board = GameObject.FindGameObjectWithTag("Board");//Starta koyunca olmuyor
+        HedefKonumX = -10;//En başta hedefi yok
+        HedefKonumZ = -10;//En başta hedefi yok
+        Gold = PlayerPrefs.GetInt("A_Gold");
+        HedefBelirlemeMaliyeti = PlayerPrefs.GetInt("A_HBM");
+        HamleMaliyeti = PlayerPrefs.GetInt("A_HM");
+        HamleSayisi = PlayerPrefs.GetInt("_HS");
+        // C:\Users\melih\Desktop\Melih\Universite\Yazılım Laboratuvarı Proje 1\YazLabPro1
+         DosyaYolu = "OyuncuAFile.txt";
+
+         fs = new FileStream(DosyaYolu, FileMode.OpenOrCreate, FileAccess.Write);
+         sw = new StreamWriter(fs);
+        
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+
+    }
+
+
+    public void HamleYap()
+    {
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuAElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(-1f, 1f, 0);
+        }
+        else
+        {
+            //Debug.Log("Hamle Yapin içi");
+            GüncelHamle = 0;
+            HedefeUlasildimi();
+
+
+
+            //Debug.Log("MatrisKonumZ:"+MatrisKonumZ+" MatrisKonumX:"+MatrisKonumX);
+            //Debug.Log("HedefKonumZ:" + HedefKonumZ + " HedefKonumX:" + HedefKonumX);
+            //Debug.Log("GüncelHamle:"+GüncelHamle);
+            while ((MatrisKonumZ != HedefKonumZ || MatrisKonumX != HedefKonumX) && GüncelHamle < HamleSayisi) //Aradaki işareti hem z hem x i farklı olsun yapmışız veya olacak..!
+            {
+                //Debug.Log("While ın içi");
+                if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SagaGit();
+                }
+                else if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SolaGit();
+                }
+                if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    YukariGit();
+                }
+                else if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    AsagiGit();
+                }
+            }
+            Gold -= HamleMaliyeti;
+            ToplamHarcananAltinsayisi += HamleMaliyeti;
+            //Debug.Log("While bitti");
+        }
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuAElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(-1f, 1f, 0);
+        }
+
+
+
+    }
+
+    public void HedefBelirle(int Z,int X)
+    {
+        //Debug.Log(Board.GetComponent<CreateGameBoard>().KareSayisiZ);
+        //Debug.Log(Board.GetComponent<CreateGameBoard>().KareSayisiX);
+        //Debug.Log(Z);
+        //Debug.Log(X);
+        //Debug.Log("Altin sayisi:hedefbelirlenin içi:" + Board.GetComponent<CreateGameBoard>().AltinSayisi);
+        TümAltinSayisi = Board.GetComponent<CreateGameBoard>().AltinSayisi;
+        TümAltinSayisi -= Board.GetComponent<CreateGameBoard>().GizliAltinSayisi;
+        //Debug.Log(Board.GetComponent<CreateGameBoard>().GizliAltinSayisi);
+        if (TümAltinSayisi > 0)
+        {
+            for (int i = 0; i < Z; i++)
+            {
+                for (int j = 0; j < X; j++)
+                {
+                    if (Board.GetComponent<CreateGameBoard>().GoldMatris[i, j] != 0) //Eğer altın varsa
+                    {
+
+                        toplam = Mathf.Abs(enYakinKonumZ - MatrisKonumZ) + Mathf.Abs(enYakinKonumX - MatrisKonumX);
+                        
+
+                        if (Mathf.Abs(i - MatrisKonumZ) + Mathf.Abs(j - MatrisKonumX) <= toplam)
+                        {
+
+                            enYakinKonumZ = i;
+                            enYakinKonumX = j;
+                            //Debug.Log("en yakin hedefin Z si:" + enYakinKonumZ + " X i:" + enYakinKonumX);
+                            //Debug.Log("goldMatris[i,j]="+goldMatris[i,j]);
+
+                        }
+                        TümAltinSayisi--;
+                    }
+
+                }
+            }
+            //en yakını bulma kısmı..
+            //en yakini bulduktan sonra
+            HedefKonumZ = enYakinKonumZ;
+            HedefKonumX = enYakinKonumX;
+            //Debug.Log("en yakin hedefin Z si:" + HedefKonumZ + " X i:" + HedefKonumX);
+            Gold -= HedefBelirlemeMaliyeti;
+            ToplamHarcananAltinsayisi += HedefBelirlemeMaliyeti;
+            if (Gold <= 0)
+            {
+                Board.GetComponent<CreateGameBoard>().OyuncuAElendiMi = true;
+                MatrisKonumZ = 1000;
+                MatrisKonumX = 1000;
+                this.gameObject.transform.position = new Vector3(-1f, 1f, 0);
+            }
+        }
+            
+        //Debug.Log("TÜM ALTIN SAYISI 0 OLMALI BAKALIM KAÇ:" + TümAltinSayisi);
+
+
+      
+        
+        
+
+
+        //MatrisKonumZ = HedefKonumZ;
+        //MatrisKonumX = HedefKonumX;
+        //HedefeUlasildimi(); Demek ki sıkıntı hareket fonksiyonunda.
+    
+
+    }
+
+    public void HedefeUlasildimi()//Sıkıntı yok
+    {
+        //Debug.Log("En baş hedefe ulaştı mı kontrolü");
+        if (MatrisKonumZ == HedefKonumZ && MatrisKonumX == HedefKonumX)
+        {
+                if(Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] == 0) //Eğer zaten alınmışsa bu sorunu düzeltti artık aynı altını almıyorlar
+            {
+                //Debug.Log("Altin zaten alinmiş ama ulaştım");
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+            }
+            else
+            {
+                Gold += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                ToplananAltinSayisi += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                Board.GetComponent<CreateGameBoard>().AltinSayisi--;
+                //Debug.Log("Altın sayısı azaltılıyor ve altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+            }
+            HedefBelirle(Board.GetComponent<CreateGameBoard>().KareSayisiZ, Board.GetComponent<CreateGameBoard>().KareSayisiX);
+
+
+        }
+        //else Debug.Log("A hala hedefe ulaşamadı");
+    }
+
+
+    public void GizliAltinKontrol()
+    {
+        if (!Board.GetComponent<CreateGameBoard>().OyuncuAElendiMi)
+        {
+            if (Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] != 0)
+            {
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                GameObject Gold_Obj = Instantiate(Board.GetComponent<CreateGameBoard>().GoldPrefab, new Vector3(MatrisKonumX, 1f, MatrisKonumZ), Quaternion.Euler(40f, 0f, 0f));
+                Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[MatrisKonumZ, MatrisKonumX] = Gold_Obj;
+                Board.GetComponent<CreateGameBoard>().GizliAltinSayisi--;
+            }
+        }
+    }
+
+
+
+
+
+
+    public void SagaGit()
+    {        
+        //Debug.Log("A Sağa gitti");
+        this.MatrisKonumX++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString()+" Saga 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+
+        GizliAltinKontrol();
+
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SagaGit();
+        }
+        return;
+    }
+
+    public void SolaGit()
+    {
+        //Debug.Log("A Sola gitti");
+        this.MatrisKonumX--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Sola 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SolaGit();
+        }
+
+        return;
+      
+       
+        
+    }
+
+    public void AsagiGit()
+    {
+        //Debug.Log("A Asagi gitti");
+        this.MatrisKonumZ--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Asagi 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            AsagiGit();
+        }
+
+        return;
+       
+        
+        
+    }
+
+    public void YukariGit()
+    {
+        //Debug.Log("A Yukari gitti");
+        this.MatrisKonumZ++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write, FileShare.None);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Yukari 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            YukariGit();
+        }
+
+        return;
+       
+
+    }
+
+    public void KonumuAyarla(int i, int j)
+    {
+        this.MatrisKonumZ = i;
+        this.MatrisKonumX = j;
+    }
+
+
+
+}
+
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+public class PlayerB :MonoBehaviour, PlayerInterface
+{
+    public int ToplamAdimSayisi = 0;
+    public int ToplananAltinSayisi = 0;
+    public int ToplamHarcananAltinsayisi = 0;
+
+    public int Gold;
+
+    public int HedefBelirlemeMaliyeti;
+
+    public int HamleMaliyeti;
+
+    public int MatrisKonumZ;
+
+    public int MatrisKonumX;
+
+    public int HedefKonumZ;
+
+    public int HedefKonumX;
+
+    public int enYakinKonumZ = 1000;
+
+    public int enYakinKonumX = 1000;
+
+    public int HamleSayisi = 0;
+
+    public int GüncelHamle = 0;
+
+    public int TümAltinSayisi;
+
+    public int maliyet;
+
+    public int enazmaliyet=10000;
+
+    public int enazmaliyetZ, enazmaliyetX;
+
+    public int mesafe;
+
+    int i, j;
+    int toplam;
+
+    public GameObject Board;
+
+    string DosyaYolu;
+    FileStream fs;
+    StreamWriter sw;
+    private void Awake()
+    {
+
+
+        Board = GameObject.FindGameObjectWithTag("Board");//Starta koyunca olmuyor
+        HedefKonumX = -10;//En başta hedefi yok
+        HedefKonumZ = -10;//En başta hedefi yok
+        Gold = PlayerPrefs.GetInt("B_Gold");
+        HedefBelirlemeMaliyeti = PlayerPrefs.GetInt("B_HBM");
+        HamleMaliyeti = PlayerPrefs.GetInt("B_HM");
+        HamleSayisi = PlayerPrefs.GetInt("_HS");
+        DosyaYolu = "OyuncuBFile.txt";
+
+        fs = new FileStream(DosyaYolu, FileMode.OpenOrCreate, FileAccess.Write);
+        sw = new StreamWriter(fs);
+
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+    }
+
+
+    public void HamleYap()
+    {
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuBElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(Board.GetComponent<CreateGameBoard>().KareSayisiX +1f , 1f, 0f);
+        }
+        else
+        {
+            //Debug.Log("Hamle Yapin içi");
+            GüncelHamle = 0;
+            HedefeUlasildimi();
+
+
+
+            //Debug.Log("MatrisKonumZ:" + MatrisKonumZ + " MatrisKonumX:" + MatrisKonumX);
+            //Debug.Log("HedefKonumZ:" + HedefKonumZ + " HedefKonumX:" + HedefKonumX);
+            //Debug.Log("GüncelHamle:" + GüncelHamle);
+            while ((MatrisKonumZ != HedefKonumZ || MatrisKonumX != HedefKonumX) && GüncelHamle < HamleSayisi) //Aradaki işareti hem z hem x i farklı olsun yapmışız veya olacak..!
+            {
+                //Debug.Log("While ın içi");
+                if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SagaGit();
+                }
+                else if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SolaGit();
+                }
+                if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    YukariGit();
+                }
+                else if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    AsagiGit();
+                }
+            }
+            Gold -= HamleMaliyeti;
+            ToplamHarcananAltinsayisi += HamleMaliyeti;
+            //Debug.Log("While bitti");
+        }
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuBElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(Board.GetComponent<CreateGameBoard>().KareSayisiX + 1f, 1f, 0f);
+        }
+
+
+    }
+
+    public void HedefBelirle( int Z, int X)
+    {
+        //Debug.Log(Board.GetComponent<CreateGameBoard>().KareSayisiZ);
+        //Debug.Log(Board.GetComponent<CreateGameBoard>().KareSayisiX);
+        //Debug.Log(Z);
+        //Debug.Log(X);
+        //Debug.Log("MatrisKonumZ:" + MatrisKonumZ + " MatrisKonumX" + MatrisKonumX);
+        TümAltinSayisi = Board.GetComponent<CreateGameBoard>().AltinSayisi;
+        TümAltinSayisi -= Board.GetComponent<CreateGameBoard>().GizliAltinSayisi;
+        if (TümAltinSayisi > 0)
+        {
+            //Debug.Log("Temel ife giriyor");
+            for (int i = 0; i < Z; i++)
+            {
+                for (int j = 0; j< X; j++)
+                {
+                    if (Board.GetComponent<CreateGameBoard>().GoldMatris[i, j] != 0) //Eğer altın varsa
+                    {
+                        
+                        mesafe = Mathf.Abs(i - MatrisKonumZ) + Mathf.Abs(j - MatrisKonumX);
+                        //Debug.Log("MatrisKonumZ:" + MatrisKonumZ+" uzaktaki i:"+i);
+                        //Debug.Log("Z Mesafesi:" + Mathf.Abs(i - MatrisKonumZ));
+                        //Debug.Log("MatrisKonumX:" + MatrisKonumX + " uzaktaki j:" + j);
+                        //Debug.Log("X Mesafesi:" + Mathf.Abs(j - MatrisKonumX));
+                        //Debug.Log("Mesafe:" + mesafe);
+                        if (mesafe % HamleSayisi == 0)
+                        {
+                            maliyet = (HamleMaliyeti * (mesafe / HamleSayisi)) - Board.GetComponent<CreateGameBoard>().GoldMatris[i, j];
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("1 maliyet:" + maliyet);
+                        }
+                        else
+                        {
+
+                            maliyet = ((HamleMaliyeti * (mesafe / HamleSayisi)) - Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]) + HamleMaliyeti; //+HamleMaliyeti 1 hamlelik maliyet ekliyor. 
+                                                                                                                     //7 ise sol taraftan 2 hamlenin maliyeti ekleniyor çünkü.En sağda 3.hamlenin maliyeti ekleniyor.
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("2 maliyet:" + maliyet);
+                        }
+
+                        if (maliyet <= enazmaliyet)
+                        {
+                            enazmaliyet = maliyet;
+                            enazmaliyetZ = i;
+                            enazmaliyetX = j;
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("Mesafe:" + mesafe);
+                            //Debug.Log("En az maliyet:" + maliyet);
+                            //Debug.Log("Güncel maaliyetli Z si:" + enazmaliyetZ + " X i:" + enazmaliyetX);
+                            
+                        }
+                        TümAltinSayisi--;
+
+                    }
+
+                }
+            }
+            //en yakını bulma kısmı..
+            //en yakini bulduktan sonra
+            HedefKonumZ = enazmaliyetZ;
+            HedefKonumX = enazmaliyetX;
+            //Debug.Log("En az maliyet:" + enazmaliyet);
+            //Debug.Log("En son en az maaliyetli Z si:" + HedefKonumZ + " X i:" + HedefKonumX);
+            Gold -= HedefBelirlemeMaliyeti;
+            ToplamHarcananAltinsayisi += HedefBelirlemeMaliyeti;
+            if (Gold <= 0)
+            {
+                Board.GetComponent<CreateGameBoard>().OyuncuBElendiMi = true;
+                MatrisKonumZ = 1000;
+                MatrisKonumX = 1000;
+                this.gameObject.transform.position = new Vector3(Board.GetComponent<CreateGameBoard>().KareSayisiX + 1f, 1f, 0f);
+            }
+        }
+               
+
+    
+    }
+    public void HedefeUlasildimi()
+    {
+        //Debug.Log("En baş hedefe ulaştı mı kontrolü");
+        if (MatrisKonumZ == HedefKonumZ && MatrisKonumX == HedefKonumX)
+        {
+            if(Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] == 0) //Eğer zaten alınmışsa bu sorunu düzeltti artık aynı altını almıyorlar
+            {
+                //Debug.Log("Altin zaten alinmiş ama ulaştım");
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                enazmaliyet = 10000;
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+            }
+            else
+            {
+                //Debug.Log("B hedefe ulaştı konumu:Z" + MatrisKonumZ + " X:" + MatrisKonumX);
+                //Debug.Log("Altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Gold += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                ToplananAltinSayisi+= Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                Board.GetComponent<CreateGameBoard>().AltinSayisi--;
+                //Debug.Log("Altın sayısı azaltılıyor ve altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                enazmaliyet = 10000;
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+            }
+            HedefBelirle(Board.GetComponent<CreateGameBoard>().KareSayisiZ, Board.GetComponent<CreateGameBoard>().KareSayisiX);
+
+
+        }
+        //else Debug.Log("B hala hedefe ulaşamadı");
+    }
+
+   
+
+    public void SagaGit()
+    {
+        //Debug.Log("B Sağa gitti");
+        this.MatrisKonumX++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Saga 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SagaGit();
+        }
+        return;
+    }
+
+    public void SolaGit()
+    {
+        //Debug.Log("B Sola gitti");
+        this.MatrisKonumX--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Sola 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SolaGit();
+        }
+
+        return;
+
+
+
+    }
+
+    public void AsagiGit()
+    {
+        //Debug.Log("B Asagi gitti");
+        this.MatrisKonumZ--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Asagi 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            AsagiGit();
+        }
+
+        return;
+
+
+
+    }
+
+    public void YukariGit()
+    {
+        //Debug.Log("B Yukari gitti");
+        this.MatrisKonumZ++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Yukari 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            YukariGit();
+        }
+
+        return;
+
+
+    }
+
+    public void GizliAltinKontrol()
+    {
+        if (!Board.GetComponent<CreateGameBoard>().OyuncuBElendiMi)
+        {
+            if (Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] != 0)
+            {
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                GameObject Gold_Obj = Instantiate(Board.GetComponent<CreateGameBoard>().GoldPrefab, new Vector3(MatrisKonumX, 1f, MatrisKonumZ), Quaternion.Euler(40f, 0f, 0f));
+                Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[MatrisKonumZ, MatrisKonumX] = Gold_Obj;
+                Board.GetComponent<CreateGameBoard>().GizliAltinSayisi--;
+            }
+        }
+
+    }
+    
+    public void KonumuAyarla(int i, int j)
+    {
+        this.MatrisKonumZ = i;
+        this.MatrisKonumX = j;
+    }
+}
+
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+public class PlayerC : MonoBehaviour, PlayerInterface
+{
+    public int ToplamAdimSayisi = 0;
+    public int ToplananAltinSayisi = 0;
+    public int ToplamHarcananAltinsayisi = 0;
+
+    public int Gold;
+
+    public int HedefBelirlemeMaliyeti;
+
+    public int HamleMaliyeti;
+
+    public int MatrisKonumZ;
+
+    public int MatrisKonumX;
+
+    public int HedefKonumZ;
+
+    public int HedefKonumX;
+
+    public int enYakinKonumZ = 1000;
+
+    public int enYakinKonumX = 1000;
+
+    public int HamleSayisi = 0;
+
+    public int GüncelHamle = 0;
+
+    public int TümAltinSayisi;
+
+    public int maliyet;
+
+    public int enazmaliyet=10000;
+
+    public int enazmaliyetZ, enazmaliyetX;
+
+    public int mesafe;
+
+    public int enYakinIndex;
+    int i, j;
+    int toplam;
+
+    public GameObject Board;
+    public List<GizliAltinBilgileri> EnYakinGizliAltinListe = new List<GizliAltinBilgileri>();
+
+    string DosyaYolu;
+    FileStream fs;
+    StreamWriter sw;
+    private void Awake()
+    {
+
+        
+        Board = GameObject.FindGameObjectWithTag("Board");//Starta koyunca olmuyor
+        HedefKonumX = -10;//En başta hedefi yok
+        HedefKonumZ = -10;//En başta hedefi yok
+        Gold = PlayerPrefs.GetInt("C_Gold");
+        HedefBelirlemeMaliyeti = PlayerPrefs.GetInt("C_HBM");
+        HamleMaliyeti = PlayerPrefs.GetInt("C_HM");
+        HamleSayisi = PlayerPrefs.GetInt("_HS");
+        enYakinIndex = 0;
+        DosyaYolu = "OyuncuCFile.txt";
+
+        fs = new FileStream(DosyaYolu, FileMode.OpenOrCreate, FileAccess.Write);
+        sw = new StreamWriter(fs);
+
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+    }
+
+
+    public void HamleYap()
+    {
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuCElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(Board.GetComponent<CreateGameBoard>().KareSayisiX + 1f, 1f, Board.GetComponent<CreateGameBoard>().KareSayisiZ-1f);
+        }
+        else
+        {
+            //Debug.Log("Hamle Yapin içi");
+            GüncelHamle = 0;
+            HedefeUlasildimi();
+
+
+
+            //Debug.Log("MatrisKonumZ:" + MatrisKonumZ + " MatrisKonumX:" + MatrisKonumX);
+            //Debug.Log("HedefKonumZ:" + HedefKonumZ + " HedefKonumX:" + HedefKonumX);
+            //Debug.Log("GüncelHamle:" + GüncelHamle);
+            while ((MatrisKonumZ != HedefKonumZ || MatrisKonumX != HedefKonumX) && GüncelHamle < HamleSayisi) //Aradaki işareti hem z hem x i farklı olsun yapmışız veya olacak..!
+            {
+                //Debug.Log("While ın içi");
+                if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SagaGit();
+                }
+                else if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SolaGit();
+                }
+                if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    YukariGit();
+                }
+                else if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    AsagiGit();
+                }
+            }
+            Gold -= HamleMaliyeti;
+            ToplamHarcananAltinsayisi += HamleMaliyeti;
+            //Debug.Log("While bitti");
+        }
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuCElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(Board.GetComponent<CreateGameBoard>().KareSayisiX + 1f, 1f, Board.GetComponent<CreateGameBoard>().KareSayisiZ-1f);
+        }
+
+
+    }
+    public void GizliAltinlariTespitEt(int[,] GizliAltinMatris, int AltinSayisii, int Z, int X)// en yakin 2 gizli altini tespit eder
+    {
+       
+        for (int i = 0; i < Z; i++)
+        {
+            for (int j = 0; j < X; j++)
+            {
+                if (GizliAltinMatris[i, j] != 0)
+                {
+                    EnYakinGizliAltinListe.Add(new GizliAltinBilgileri { Zi = i, Xj = j ,Mesafe=Mathf.Abs(i-MatrisKonumZ)+ Mathf.Abs(j - MatrisKonumX) });
+                   
+                }
+            }
+        }
+
+        for (int i = 0; i < EnYakinGizliAltinListe.Count; i++)
+        {
+            //Gizli Altin Sayisi ve Count 8 olmasına rağmen bazen eksik oluyor burada yazdırırken
+            //Debug.Log("MESAFELER İLK HALİ " + EnYakinGizliAltinListe[i].Mesafe);
+        }
+
+        for (int i=0; i<EnYakinGizliAltinListe.Count;i++)
+        {
+            for (int j=0; j<EnYakinGizliAltinListe.Count;j++)
+            {
+                //if (EnYakinGizliAltinListe[i].Mesafe > EnYakinGizliAltinListe[j].Mesafe) Demin böyleydi,böyle olunca büyükten küçüğe doğru oluyor liste o yüzden en uzaktakileri açığa çıkarıyordu
+               
+                if (EnYakinGizliAltinListe[i].Mesafe < EnYakinGizliAltinListe[j].Mesafe)//Böyle düzeltildi de ?
+                {
+                    //Debug.Log("Değiştiliyor küçük olan:" + EnYakinGizliAltinListe[i].Mesafe);
+                    //Debug.Log("Değiştiliyor büyük olan:" + EnYakinGizliAltinListe[j].Mesafe);
+                    GizliAltinBilgileri Gizli_altin_gecici = EnYakinGizliAltinListe[i];
+                    EnYakinGizliAltinListe[i] = EnYakinGizliAltinListe[j];
+                    EnYakinGizliAltinListe[j] = Gizli_altin_gecici;
+                }
+            }
+        }
+        ////Debug.Log("--> " + EnYakinGizliAltinListe.Count);
+        //for (int i = 0; i < EnYakinGizliAltinListe.Count; i++)
+        //{
+        //    //Gizli Altin Sayisi ve Count 8 olmasına rağmen bazen eksik oluyor burada yazdırırken
+        //    //Debug.Log("MESAFE " + EnYakinGizliAltinListe[i].Mesafe);
+        //}
+        
+        if (EnYakinGizliAltinListe.Count < 2)
+        {
+            enYakinIndex = 1;
+        }
+        else
+        {
+            enYakinIndex = 2;
+        }
+        for (int i = 0; i < enYakinIndex; i++)
+        {
+            if (EnYakinGizliAltinListe.Count > 0 && Board.GetComponent<CreateGameBoard>().GizliAltinMatris[EnYakinGizliAltinListe[i].Zi, EnYakinGizliAltinListe[i].Xj] != 0)
+            {
+                Board.GetComponent<CreateGameBoard>().GoldMatris[EnYakinGizliAltinListe[i].Zi, EnYakinGizliAltinListe[i].Xj] = Board.GetComponent<CreateGameBoard>().GizliAltinMatris[EnYakinGizliAltinListe[i].Zi, EnYakinGizliAltinListe[i].Xj];
+                Board.GetComponent<CreateGameBoard>().GizliAltinMatris[EnYakinGizliAltinListe[i].Zi, EnYakinGizliAltinListe[i].Xj] = 0;
+                //Debug.Log("Gizli altin normale çevrildi konumu:" + EnYakinGizliAltinListe[i].Zi + " "+ EnYakinGizliAltinListe[i].Xj);
+                GameObject Gold_Obj = Instantiate(Board.GetComponent<CreateGameBoard>().GoldPrefab, new Vector3(EnYakinGizliAltinListe[i].Xj, 1f, EnYakinGizliAltinListe[i].Zi), Quaternion.Euler(40f, 0f, 0f));
+                Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[EnYakinGizliAltinListe[i].Zi, EnYakinGizliAltinListe[i].Xj] = Gold_Obj;
+                Board.GetComponent<CreateGameBoard>().GizliAltinSayisi--;
+            }
+        }
+        EnYakinGizliAltinListe.Clear();
+
+
+
+    }
+
+    public void HedefBelirle(int Z, int X)
+    {
+        //Debug.Log("MatrisKonumZ:" + MatrisKonumZ + " MatrisKonumX" + MatrisKonumX);
+        TümAltinSayisi = Board.GetComponent<CreateGameBoard>().AltinSayisi;
+        TümAltinSayisi -= Board.GetComponent<CreateGameBoard>().GizliAltinSayisi;
+        if (TümAltinSayisi > 0)
+        {
+            //Debug.Log("Temel ife giriyor");
+            for (int i = 0; i < Z; i++)
+            {
+                for (int j = 0; j < X; j++)
+                {
+                    if (Board.GetComponent<CreateGameBoard>().GoldMatris[i, j] != 0) //Eğer altın varsa
+                    {
+
+                        mesafe = Mathf.Abs(i - MatrisKonumZ) + Mathf.Abs(j - MatrisKonumX);
+                        //Debug.Log("MatrisKonumZ:" + MatrisKonumZ+" uzaktaki i:"+i);
+                        //Debug.Log("Z Mesafesi:" + Mathf.Abs(i - MatrisKonumZ));
+                        //Debug.Log("MatrisKonumX:" + MatrisKonumX + " uzaktaki j:" + j);
+                        //Debug.Log("X Mesafesi:" + Mathf.Abs(j - MatrisKonumX));
+                        //Debug.Log("Mesafe:" + mesafe);
+                        if (mesafe % HamleSayisi == 0)
+                        {
+                            maliyet = (HamleMaliyeti * (mesafe / HamleSayisi)) - Board.GetComponent<CreateGameBoard>().GoldMatris[i, j];
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("1 maliyet:" + maliyet);
+                        }
+                        else
+                        {
+
+                            maliyet = ((HamleMaliyeti * (mesafe / HamleSayisi)) - Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]) + HamleMaliyeti; //+HamleMaliyeti 1 hamlelik maliyet ekliyor. 
+                                                                                                                     //7 ise sol taraftan 2 hamlenin maliyeti ekleniyor çünkü.En sağda 3.hamlenin maliyeti ekleniyor.
+                                                                                                                     //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                                                                                                                     //Debug.Log("2 maliyet:" + maliyet);
+                        }
+
+                        if (maliyet <= enazmaliyet)
+                        {
+                            enazmaliyet = maliyet;
+                            enazmaliyetZ = i;
+                            enazmaliyetX = j;
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("Mesafe:" + mesafe);
+                            //Debug.Log("En az maliyet:" + maliyet);
+                            //Debug.Log("Güncel maaliyetli Z si:" + enazmaliyetZ + " X i:" + enazmaliyetX);
+
+                        }
+                        TümAltinSayisi--;
+
+                    }
+
+                }
+            }
+            HedefKonumZ = enazmaliyetZ;
+            HedefKonumX = enazmaliyetX;
+            //Debug.Log("En az maliyet:" + enazmaliyet);
+            //Debug.Log("En son en az maaliyetli Z si:" + HedefKonumZ + " X i:" + HedefKonumX);
+            Gold -= HedefBelirlemeMaliyeti;
+            ToplamHarcananAltinsayisi += HedefBelirlemeMaliyeti;
+            if (Gold <= 0)
+            {
+                Board.GetComponent<CreateGameBoard>().OyuncuCElendiMi = true;
+                MatrisKonumZ = 1000;
+                MatrisKonumX = 1000;
+                this.gameObject.transform.position = new Vector3(Board.GetComponent<CreateGameBoard>().KareSayisiX + 1f, 1f, Board.GetComponent<CreateGameBoard>().KareSayisiZ - 1f);
+            }
+        }
+
+
+        //en yakını bulma kısmı..
+        //en yakini bulduktan sonra
+        
+    }
+
+    public void HedefeUlasildimi()
+    {
+        if (MatrisKonumZ == HedefKonumZ && MatrisKonumX == HedefKonumX)
+        {
+            if (Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] == 0) //Eğer zaten alınmışsa bu sorunu düzeltti artık aynı altını almıyorlar
+            {
+                //Debug.Log("Altin zaten alinmiş ama ulaştım");
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                enazmaliyet = 10000;
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                
+            }
+            else
+            {
+                //Debug.Log("B hedefe ulaştı konumu:Z" + MatrisKonumZ + " X:" + MatrisKonumX);
+                //Debug.Log("Altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Gold += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                ToplananAltinSayisi += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                Board.GetComponent<CreateGameBoard>().AltinSayisi--;
+                //Debug.Log("Altın sayısı azaltılıyor ve altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                enazmaliyet = 10000;
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                
+            }
+            if (Board.GetComponent<CreateGameBoard>().GizliAltinSayisi > 0)
+            {
+                GizliAltinlariTespitEt(Board.GetComponent<CreateGameBoard>().GizliAltinMatris, 80, Board.GetComponent<CreateGameBoard>().KareSayisiZ, Board.GetComponent<CreateGameBoard>().KareSayisiX);
+            }
+            HedefBelirle(Board.GetComponent<CreateGameBoard>().KareSayisiZ, Board.GetComponent<CreateGameBoard>().KareSayisiX);
+            
+
+
+        }
+    }
+
+
+
+    public void SagaGit()
+    {
+        //Debug.Log("C Sağa gitti");
+        this.MatrisKonumX++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Saga 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SagaGit();
+        }
+        return;
+    }
+
+    public void SolaGit()
+    {
+        //Debug.Log("C Sola gitti");
+        this.MatrisKonumX--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Sola 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SolaGit();
+        }
+
+        return;
+
+
+
+    }
+
+    public void AsagiGit()
+    {
+        //Debug.Log("C Asagi gitti");
+        this.MatrisKonumZ--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Asagi 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            AsagiGit();
+        }
+
+        return;
+
+
+
+    }
+
+    public void YukariGit()
+    {
+        //Debug.Log("C Yukari gitti");
+        this.MatrisKonumZ++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Yukari 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            YukariGit();
+        }
+
+        return;
+
+
+    }
+    public void GizliAltinKontrol()
+    {
+        if (!Board.GetComponent<CreateGameBoard>().OyuncuCElendiMi)
+        {
+            if (Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] != 0)
+            {
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                GameObject Gold_Obj = Instantiate(Board.GetComponent<CreateGameBoard>().GoldPrefab, new Vector3(MatrisKonumX, 1f, MatrisKonumZ), Quaternion.Euler(40f, 0f, 0f));
+                Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[MatrisKonumZ, MatrisKonumX] = Gold_Obj;
+                Board.GetComponent<CreateGameBoard>().GizliAltinSayisi--;
+            }
+        }
+
+    }
+
+    public void KonumuAyarla(int i, int j)
+    {
+        this.MatrisKonumZ = i;
+        this.MatrisKonumX = j;
+    }
+}
+public class GizliAltinBilgileri
+{
+   public int Zi, Xj,Mesafe;
+
+
+}
+
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+public class PlayerD : MonoBehaviour, PlayerInterface
+{
+    public int ToplamAdimSayisi = 0;
+    public int ToplananAltinSayisi = 0;
+    public int ToplamHarcananAltinsayisi = 0;
+
+    public int Gold;
+
+    public int HedefBelirlemeMaliyeti;
+
+    public int HamleMaliyeti;
+
+    public int MatrisKonumZ;
+
+    public int MatrisKonumX;
+
+    public int HedefKonumZ;
+
+    public int HedefKonumX;
+
+    public int enYakinKonumZ = 1000;
+
+    public int enYakinKonumX = 1000;
+
+    public int HamleSayisi = 0;
+
+    public int GüncelHamle = 0;
+
+    public int TümAltinSayisi;
+
+    public int maliyet;
+
+    public int mesafe;
+
+    public int enazmaliyet = 10000;
+
+    public int enazmaliyetZ, enazmaliyetX;
+
+    public int[,] GoldMatrisD;
+    public GameObject OyuncuA_D;
+    public GameObject OyuncuB_D;
+    public GameObject OyuncuC_D;
+
+    public int GoldMatrisDAltinSayisi;
+
+    int i, j;
+    int toplam;
+
+    public GameObject Board;
+
+    string DosyaYolu;
+    FileStream fs;
+    StreamWriter sw;
+    private void Awake()
+    {
+     
+        Board = GameObject.FindGameObjectWithTag("Board");//Starta koyunca olmuyor
+        HedefKonumX = -10;//En başta hedefi yok
+        HedefKonumZ = -10;//En başta hedefi yok
+        Gold = PlayerPrefs.GetInt("D_Gold");
+        HedefBelirlemeMaliyeti = PlayerPrefs.GetInt("D_HBM");
+        HamleMaliyeti = PlayerPrefs.GetInt("D_HM");
+        HamleSayisi = PlayerPrefs.GetInt("_HS");
+        GoldMatrisD = new int[Board.GetComponent<CreateGameBoard>().KareSayisiZ, Board.GetComponent<CreateGameBoard>().KareSayisiX];
+        DosyaYolu = "OyuncuDFile.txt";
+        fs = new FileStream(DosyaYolu, FileMode.OpenOrCreate, FileAccess.Write);
+        sw = new StreamWriter(fs);
+
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+    }
+    private void Start()
+    {
+        OyuncuA_D = Board.GetComponent<CreateGameBoard>().OyuncuA;
+        OyuncuB_D = Board.GetComponent<CreateGameBoard>().OyuncuB;
+        OyuncuC_D = Board.GetComponent<CreateGameBoard>().OyuncuC;
+    }
+
+
+
+    public void HamleYap()
+    {
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuDElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(-1f, 1f, Board.GetComponent<CreateGameBoard>().KareSayisiZ-1);
+            
+        }
+        else
+        {
+            //Debug.Log("Hamle Yapin içi");
+            GüncelHamle = 0;
+            HedefeUlasildimi();
+
+
+
+            //Debug.Log("MatrisKonumZ:" + MatrisKonumZ + " MatrisKonumX:" + MatrisKonumX);
+            //Debug.Log("HedefKonumZ:" + HedefKonumZ + " HedefKonumX:" + HedefKonumX);
+            //Debug.Log("GüncelHamle:" + GüncelHamle);
+            while ((MatrisKonumZ != HedefKonumZ || MatrisKonumX != HedefKonumX) && GüncelHamle < HamleSayisi) //Aradaki işareti hem z hem x i farklı olsun yapmışız veya olacak..!
+            {
+                //Debug.Log("While ın içi");
+                if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SagaGit();
+                }
+                else if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+                {
+                    SolaGit();
+                }
+                if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    YukariGit();
+                }
+                else if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+                {
+                    AsagiGit();
+                }
+            }
+            
+            Gold -= HamleMaliyeti;
+            ToplamHarcananAltinsayisi += HamleMaliyeti;
+            //Debug.Log("While bitti");
+        }
+        if (Gold <= 0)
+        {
+            Board.GetComponent<CreateGameBoard>().OyuncuDElendiMi = true;
+            MatrisKonumZ = 1000;
+            MatrisKonumX = 1000;
+            this.gameObject.transform.position = new Vector3(-1f, 1f, Board.GetComponent<CreateGameBoard>().KareSayisiZ - 1);
+        }
+
+
+    }
+    public void DigerHamleleriKontrolEt()
+    {
+        
+            GoldMatrisDAltinSayisi = Board.GetComponent<CreateGameBoard>().AltinSayisi;
+            for (int i = 0; i < Board.GetComponent<CreateGameBoard>().KareSayisiZ; i++)
+            {
+                for (int j = 0; j < Board.GetComponent<CreateGameBoard>().KareSayisiX; j++)
+                {
+                    GoldMatrisD[i, j] = Board.GetComponent<CreateGameBoard>().GoldMatris[i, j];
+                }
+            }
+            //Debug.Log("Hedef "+OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ +" "+OyuncuA_D.GetComponent<PlayerA>().HedefKonumX);
+            //Debug.Log("Konum "+OyuncuA_D.GetComponent<PlayerA>().MatrisKonumZ + " " + OyuncuA_D.GetComponent<PlayerA>().MatrisKonumX);
+            int mesafeX = Mathf.Abs(OyuncuA_D.GetComponent<PlayerA>().HedefKonumX - OyuncuA_D.GetComponent<PlayerA>().MatrisKonumX);
+            int mesafeZ = Mathf.Abs(OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ - OyuncuA_D.GetComponent<PlayerA>().MatrisKonumZ);
+            //Debug.Log(mesafeZ + " " + mesafeX);
+            int Mesafe = mesafeZ + mesafeX;
+            //Debug.Log(Mesafe);
+
+
+            int MesafeD = Mathf.Abs(MatrisKonumX - OyuncuA_D.GetComponent<PlayerA>().HedefKonumX) + Mathf.Abs(MatrisKonumZ - OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ);
+            int KacHamle;
+            if (Mesafe % HamleSayisi == 0)
+            {
+                KacHamle = Mesafe / HamleSayisi;
+            }
+            else
+            {
+                KacHamle = (Mesafe / HamleSayisi) + 1;
+            }
+            int KacHamleD;
+            if (MesafeD % HamleSayisi == 0)
+            {
+                KacHamleD = MesafeD / HamleSayisi;
+            }
+            else
+            {
+                KacHamleD = (MesafeD / HamleSayisi) + 1;
+            }
+            KacHamleD--;
+            //Debug.Log("AMesafe" + Mesafe);
+            //Debug.Log("AKacHamle" + KacHamle);
+            //Debug.Log("KacHamleD" + KacHamleD);
+
+            if (KacHamle <= KacHamleD)
+            {
+                if (OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ != -10 && OyuncuA_D.GetComponent<PlayerA>().HedefKonumX != -10 && OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ != 1000 && OyuncuA_D.GetComponent<PlayerA>().HedefKonumX != 1000)
+                {
+                //Debug.Log("A_Z " + OyuncuA_D.GetComponent<PlayerA>().MatrisKonumZ + " X " + OyuncuA_D.GetComponent<PlayerA>().MatrisKonumX);
+                //Debug.Log("D_Z " + MatrisKonumZ + " X " + MatrisKonumX);
+                //Debug.Log("Hedef Z "+OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ+" X "+ OyuncuA_D.GetComponent<PlayerA>().HedefKonumX);
+                GoldMatrisD[OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ, OyuncuA_D.GetComponent<PlayerA>().HedefKonumX] = 0;
+                GoldMatrisDAltinSayisi--;
+                }
+                
+            }
+            else
+            {
+                //Debug.Log("Bunu Alabilirim" + "A_Z " + OyuncuA_D.GetComponent<PlayerA>().HedefKonumZ + " X " + OyuncuA_D.GetComponent<PlayerA>().HedefKonumX);
+            }
+
+            Mesafe = Mathf.Abs(OyuncuB_D.GetComponent<PlayerB>().HedefKonumX - OyuncuB_D.GetComponent<PlayerB>().MatrisKonumX) + Mathf.Abs(OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ - OyuncuB_D.GetComponent<PlayerB>().MatrisKonumZ);
+
+            MesafeD = Mathf.Abs(MatrisKonumX - OyuncuB_D.GetComponent<PlayerB>().HedefKonumX) + Mathf.Abs(MatrisKonumZ - OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ);
+
+            if (Mesafe % HamleSayisi == 0)
+            {
+                KacHamle = Mesafe / HamleSayisi;
+            }
+            else
+            {
+                KacHamle = (Mesafe / HamleSayisi) + 1;
+            }
+
+            if (MesafeD % HamleSayisi == 0)
+            {
+                KacHamleD = MesafeD / HamleSayisi;
+            }
+            else
+            {
+                KacHamleD = (MesafeD / HamleSayisi) + 1;
+            }
+            KacHamleD--;
+            //Debug.Log("BMesafe" + Mesafe);
+            //Debug.Log("BKacHamle" + KacHamle);
+            //Debug.Log("KacHamleD" + KacHamleD);
+
+            if (KacHamle <= KacHamleD)
+            {
+            
+            if (OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ != -10 && OyuncuB_D.GetComponent<PlayerB>().HedefKonumX != -10 && OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ != 1000 && OyuncuB_D.GetComponent<PlayerB>().HedefKonumX != 1000)
+            {
+                //Debug.Log("B_Z " + OyuncuB_D.GetComponent<PlayerB>().MatrisKonumZ + " X " + OyuncuB_D.GetComponent<PlayerB>().MatrisKonumX);
+                //Debug.Log("D_Z " + MatrisKonumZ + " X " + MatrisKonumX);
+                //Debug.Log("Hedef Z " + OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ + " X " + OyuncuB_D.GetComponent<PlayerB>().HedefKonumX);
+                GoldMatrisD[OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ, OyuncuB_D.GetComponent<PlayerB>().HedefKonumX] = 0;
+                GoldMatrisDAltinSayisi--;
+                
+            }
+
+        }
+            else
+            {
+                //Debug.Log("Bunu Alabilirim" + "B_Z " + OyuncuB_D.GetComponent<PlayerB>().HedefKonumZ + " X " + OyuncuB_D.GetComponent<PlayerB>().HedefKonumX);
+            }
+
+            Mesafe = Mathf.Abs(OyuncuC_D.GetComponent<PlayerC>().HedefKonumX - OyuncuC_D.GetComponent<PlayerC>().MatrisKonumX) + Mathf.Abs(OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ - OyuncuC_D.GetComponent<PlayerC>().MatrisKonumZ);
+
+            MesafeD = Mathf.Abs(MatrisKonumX - OyuncuC_D.GetComponent<PlayerC>().HedefKonumX) + Mathf.Abs(MatrisKonumZ - OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ);
+
+            if (Mesafe % HamleSayisi == 0)
+            {
+                KacHamle = Mesafe / HamleSayisi;
+            }
+            else
+            {
+                KacHamle = (Mesafe / HamleSayisi) + 1;
+            }
+
+            if (MesafeD % HamleSayisi == 0)
+            {
+                KacHamleD = MesafeD / HamleSayisi;
+            }
+            else
+            {
+                KacHamleD = (MesafeD / HamleSayisi) + 1;
+            }
+            KacHamleD--;
+            //Debug.Log("CMesafe" + Mesafe);
+            //Debug.Log("CKacHamle" + KacHamle);
+            //Debug.Log("KacHamleD" + KacHamleD);
+
+            if (KacHamle <= KacHamleD)
+            {
+                if(OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ!=-10 && OyuncuC_D.GetComponent<PlayerC>().HedefKonumX != -10 && OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ !=1000 && OyuncuC_D.GetComponent<PlayerC>().HedefKonumX !=1000)
+                {
+                //Debug.Log("C_Z " + OyuncuC_D.GetComponent<PlayerC>().MatrisKonumZ + " X " + OyuncuC_D.GetComponent<PlayerC>().MatrisKonumX);
+                //Debug.Log("D_Z " + MatrisKonumZ + " X " + MatrisKonumX);
+                //Debug.Log("Hedef Z " + OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ + " X " + OyuncuC_D.GetComponent<PlayerC>().HedefKonumX);
+                GoldMatrisD[OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ, OyuncuC_D.GetComponent<PlayerC>().HedefKonumX] = 0;
+                GoldMatrisDAltinSayisi--;
+                }
+                
+                
+            }
+            else
+            {
+
+                //Debug.Log("Bunu Alabilirim" +"C_Z " + OyuncuC_D.GetComponent<PlayerC>().HedefKonumZ + " X " + OyuncuC_D.GetComponent<PlayerC>().HedefKonumX);
+            }
+        
+
+    }
+
+
+    public void HedefBelirle(int Z, int X)
+    {
+        //Debug.Log("MatrisKonumZ:" + MatrisKonumZ + " MatrisKonumX" + MatrisKonumX);
+        DigerHamleleriKontrolEt();
+        TümAltinSayisi = GoldMatrisDAltinSayisi;
+        TümAltinSayisi -= Board.GetComponent<CreateGameBoard>().GizliAltinSayisi;
+        //Debug.Log(TümAltinSayisi + "" + Board.GetComponent<CreateGameBoard>().GizliAltinSayisi);
+        if (TümAltinSayisi > 0)
+        {
+            //Debug.Log("Temel ife giriyor");
+            for (int i = 0; i < Z; i++)
+            {
+                for (int j = 0; j < X; j++)
+                {
+                    if (GoldMatrisD[i, j] != 0) //Eğer altın varsa
+                    {
+
+                        mesafe = Mathf.Abs(i - MatrisKonumZ) + Mathf.Abs(j - MatrisKonumX);
+                        //Debug.Log("MatrisKonumZ:" + MatrisKonumZ+" uzaktaki i:"+i);
+                        //Debug.Log("Z Mesafesi:" + Mathf.Abs(i - MatrisKonumZ));
+                        //Debug.Log("MatrisKonumX:" + MatrisKonumX + " uzaktaki j:" + j);
+                        //Debug.Log("X Mesafesi:" + Mathf.Abs(j - MatrisKonumX));
+                        //Debug.Log("Mesafe:" + mesafe);
+                        if (mesafe % HamleSayisi == 0)
+                        {
+                            maliyet = (HamleMaliyeti * (mesafe / HamleSayisi)) - GoldMatrisD[i, j];
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("1 maliyet:" + maliyet);
+                        }
+                        else
+                        {
+
+                            maliyet = ((HamleMaliyeti * (mesafe / HamleSayisi)) - GoldMatrisD[i, j]) + HamleMaliyeti; //+HamleMaliyeti 1 hamlelik maliyet ekliyor. 
+                                                                                                                     //7 ise sol taraftan 2 hamlenin maliyeti ekleniyor çünkü.En sağda 3.hamlenin maliyeti ekleniyor.
+                                                                                                                     //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                                                                                                                     //Debug.Log("2 maliyet:" + maliyet);
+                        }
+
+                        if (maliyet <= enazmaliyet)
+                        {
+                            enazmaliyet = maliyet;
+                            enazmaliyetZ = i;
+                            enazmaliyetX = j;
+                            //Debug.Log("Altın sayısı:" + Board.GetComponent<CreateGameBoard>().GoldMatris[i, j]);
+                            //Debug.Log("Mesafe:" + mesafe);
+                            //Debug.Log("En az maliyet:" + maliyet);
+                            //Debug.Log("Güncel maaliyetli Z si:" + enazmaliyetZ + " X i:" + enazmaliyetX);
+
+                        }
+                        TümAltinSayisi--;
+
+                    }
+
+                }
+            }
+            HedefKonumZ = enazmaliyetZ;
+            HedefKonumX = enazmaliyetX;
+            //Debug.Log("En az maliyet:" + enazmaliyet);
+            //Debug.Log("En son en az maaliyetli Z si:" + HedefKonumZ + " X i:" + HedefKonumX);
+            Gold -= HedefBelirlemeMaliyeti;
+            ToplamHarcananAltinsayisi += HedefBelirlemeMaliyeti;
+            if (Gold <= 0)
+            {
+                Board.GetComponent<CreateGameBoard>().OyuncuDElendiMi = true;
+                MatrisKonumZ = 1000;
+                MatrisKonumX = 1000;
+                this.gameObject.transform.position = new Vector3(-1f, 1f, Board.GetComponent<CreateGameBoard>().KareSayisiZ - 1);
+            }
+        }
+
+
+        //en yakını bulma kısmı..
+        //en yakini bulduktan sonra
+        
+
+
+    }
+
+    public void HedefeUlasildimi()
+    {
+        if (MatrisKonumZ == HedefKonumZ && MatrisKonumX == HedefKonumX)
+        {
+            if (Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] == 0) //Eğer zaten alınmışsa bu sorunu düzeltti artık aynı altını almıyorlar
+            {
+                //Debug.Log("Altin zaten alinmiş ama ulaştım");
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                enazmaliyet = 10000;
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+
+            }
+            else
+            {
+                //Debug.Log("B hedefe ulaştı konumu:Z" + MatrisKonumZ + " X:" + MatrisKonumX);
+                //Debug.Log("Altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Gold += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                ToplananAltinSayisi += Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                Board.GetComponent<CreateGameBoard>().AltinSayisi--;
+                //Debug.Log("Altın sayısı azaltılıyor ve altın sıfırlanıyor konumu:" + MatrisKonumZ + " " + MatrisKonumX);
+                Destroy(Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[HedefKonumZ, HedefKonumX].gameObject);
+                GüncelHamle = HamleSayisi;// Yani bir daha hamle yapmasını engelliyoruz.
+                enazmaliyet = 10000;
+                HedefKonumX = -10;//Null yerine
+                HedefKonumZ = -10;//Null yerine
+                enYakinKonumZ = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+                enYakinKonumX = 1000;//Tekrar en yakını bulması için büyük bir değer giriyoruz
+            }
+            //HedefBelirle(Board.GetComponent<CreateGameBoard>().KareSayisiZ, Board.GetComponent<CreateGameBoard>().KareSayisiX);
+            
+
+        }
+
+    }
+
+   
+
+    public void SagaGit()
+    {
+        //Debug.Log("D Sağa gitti");
+        this.MatrisKonumX++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Saga 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX < HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SagaGit();
+        }
+        return;
+    }
+
+    public void SolaGit()
+    {
+        //Debug.Log("D Sola gitti");
+        this.MatrisKonumX--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Sola 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumX > HedefKonumX && GüncelHamle < HamleSayisi)
+        {
+            SolaGit();
+        }
+
+        return;
+
+
+
+    }
+
+    public void AsagiGit()
+    {
+        //Debug.Log("D Asagi gitti");
+        this.MatrisKonumZ--;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Asagi 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();
+        GizliAltinKontrol();
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ > HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            AsagiGit();
+        }
+
+        return;
+
+
+
+    }
+
+    public void YukariGit()
+    {
+        //Debug.Log("D Yukari gitti");
+        this.MatrisKonumZ++;
+        this.gameObject.transform.position = new Vector3(this.MatrisKonumX, 1f, this.MatrisKonumZ);
+        ToplamAdimSayisi++;
+        fs = new FileStream(DosyaYolu, FileMode.Append, FileAccess.Write);
+        sw = new StreamWriter(fs);
+        sw.WriteLine(this.MatrisKonumZ.ToString() + " " + this.MatrisKonumX.ToString() + " Yukari 1 Adim Gitti");
+        sw.Flush();
+        sw.Close();
+        fs.Close();        
+        GizliAltinKontrol();
+
+        GüncelHamle++;
+        HedefeUlasildimi();
+        if (MatrisKonumZ < HedefKonumZ && GüncelHamle < HamleSayisi)
+        {
+            YukariGit();
+        }
+
+        return;
+
+
+    }
+
+    public void GizliAltinKontrol()
+    {
+        if (!Board.GetComponent<CreateGameBoard>().OyuncuDElendiMi)
+        {
+            if (Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] != 0)
+            {
+                Board.GetComponent<CreateGameBoard>().GoldMatris[MatrisKonumZ, MatrisKonumX] = Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX];
+                Board.GetComponent<CreateGameBoard>().GizliAltinMatris[MatrisKonumZ, MatrisKonumX] = 0;
+                GameObject Gold_Obj = Instantiate(Board.GetComponent<CreateGameBoard>().GoldPrefab, new Vector3(MatrisKonumX, 1f, MatrisKonumZ), Quaternion.Euler(40f, 0f, 0f));
+                Board.GetComponent<CreateGameBoard>().AllGoldPrefabs[MatrisKonumZ, MatrisKonumX] = Gold_Obj;
+                Board.GetComponent<CreateGameBoard>().GizliAltinSayisi--;
+            }
+        }
+        
+
+    }
+
+    public void KonumuAyarla(int i, int j)
+    {
+        this.MatrisKonumZ = i;
+        this.MatrisKonumX = j;
+    }
+}
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public interface PlayerInterface 
+{
+    
+    void HamleYap(); //Hareket etmesini sağlar
+    void HedefBelirle(int Z,int X);//Kendi kuralına göre hedef belirler
+    void SagaGit();
+    void SolaGit();
+    void YukariGit();
+    void AsagiGit();
+    void HedefeUlasildimi();
+
+    void KonumuAyarla(int i,int j);
+
+
+}
